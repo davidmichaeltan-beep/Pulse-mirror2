@@ -105,7 +105,7 @@ h1 {
 
 /* Stage */
 .stage {
-  position: relative; background: var(--stage); border-radius: 12px; overflow: hidden;
+  position: relative; background: var(--stage); border-radius: 12px; overflow: hidden; cursor: crosshair;
   aspect-ratio: var(--ar, 4 / 3);
   width: min(100%, calc(68vh * var(--ar-num, 1.3333)));
   max-width: 100%; margin-inline: auto;
@@ -247,6 +247,7 @@ details.about[open] summary::before { content: "\2212"; }
           <span class="chip chip-tl" id="srcTag">Demo face</span>
           <span class="chip chip-tr live-dot" id="liveDot" hidden>Live</span>
           <span class="chip chip-bc" id="stillChip" hidden>Movement detected. Hold still.</span>
+          <span class="chip chip-bc" id="hintChip" hidden>Finding your pulse. Hold still in good light.</span>
         </div>
       </div>
 
@@ -303,6 +304,14 @@ details.about[open] summary::before { content: "\2212"; }
           <button class="btn ghost small" id="resetTune" type="button">Reset</button>
         </div>
         <div class="tune-row">
+          <span class="field-label" id="methodLabel">Method</span>
+          <div class="seg" id="methodSeg" role="group" aria-labelledby="methodLabel">
+            <button type="button" data-method="0" aria-pressed="true">Clean pulse</button>
+            <button type="button" data-method="1" aria-pressed="false">Raw</button>
+          </div>
+          <p class="tune-help" id="methodHelp"></p>
+        </div>
+        <div class="tune-row">
           <span class="field-label" id="regionLabel">Exaggerate</span>
           <div class="seg" id="regionSeg" role="group" aria-labelledby="regionLabel">
             <button type="button" data-region="0" aria-pressed="false">Everywhere</button>
@@ -312,10 +321,27 @@ details.about[open] summary::before { content: "\2212"; }
           <p class="tune-help" id="regionHelp"></p>
         </div>
         <div class="tune-row">
+          <span class="field-label" id="spotLabel">Measure</span>
+          <div class="seg" id="spotSeg" role="group" aria-labelledby="spotLabel">
+            <button type="button" data-spot="0" aria-pressed="true">Your face</button>
+            <button type="button" data-spot="1" aria-pressed="false" disabled>Tapped spot</button>
+          </div>
+          <p class="tune-help">Tap the picture to measure somewhere else, such as your palm or wrist.</p>
+        </div>
+        <div class="tune-row">
+          <label class="switch"><input type="checkbox" id="stabChk" checked><span class="switch-ui"></span><span>Steady the picture</span></label>
+          <p class="tune-help">Follows small shakes of the camera or your head, so edges don't flash as they move.</p>
+        </div>
+        <div class="tune-row" id="strictRow">
+          <label class="field-label" for="strict"><span>Strictness</span><output id="strictOut" for="strict"></output></label>
+          <input type="range" id="strict" min="0" max="100" step="5" value="30">
+          <p class="tune-help">How closely an area must follow your heartbeat before it changes. Raise it if anything flickers; lower it if too little changes.</p>
+        </div>
+        <div class="tune-row" id="cancelRow" hidden>
           <label class="switch"><input type="checkbox" id="cancelChk" checked><span class="switch-ui"></span><span>Cancel lighting flicker</span></label>
           <p class="tune-help">Removes brightness changes the whole room shares, such as the camera adjusting its exposure or a flickering light.</p>
         </div>
-        <div class="tune-row">
+        <div class="tune-row" id="floorRow" hidden>
           <label class="field-label" for="floor"><span>Noise floor</span><output id="floorOut" for="floor"></output></label>
           <input type="range" id="floor" min="0" max="100" step="5" value="10" aria-describedby="floorHelp">
           <p class="tune-help" id="floorHelp">Ignores colour changes too small to be a pulse. Raise it if still areas shimmer; lower it if the pulse fades.</p>
@@ -347,10 +373,13 @@ details.about[open] summary::before { content: "\2212"; }
           <p>Blood absorbs green light, so each heartbeat darkens the skin very slightly. A camera records the change even though your eyes can't see it.</p>
           <p>For every frame, the app averages the picture into a coarse grid about 40 cells across. It follows each cell's colour over time and keeps only the changes that repeat at heart-rate speeds, between 45 and 150 beats per minute. It multiplies those changes by the exaggeration setting and adds them back onto the picture. This is <b>Eulerian video magnification</b>, introduced by Wu and colleagues at MIT in 2012.</p>
           <p>It also tracks your face, averages the forehead and cheeks, and looks for one steady rhythm. When it finds one, it narrows the filter to 10 bpm either side of your heart rate, which removes most changes that aren't your pulse.</p>
-          <p>By default only the skin of your face is exaggerated. The app learns your skin tone from your forehead and cheeks and leaves walls, hair and clothes alone; choose Skin to include your neck and hands too. It also measures how much the background brightens and darkens and removes that shared change from the whole picture, which cancels the camera's exposure adjustments and flickering lights.</p>
+          <p><b>Clean pulse</b>, the default, goes further. First it removes the brightening and darkening that the background shares, which is the camera adjusting its exposure or the room light changing. Then it builds one pulse signal from your forehead and cheeks, mixing red, green and blue in the proportions that favour the colour change blood makes over the changes camera noise makes. Over a few seconds it learns how strongly each part of the picture follows that signal. Each area shows only the part of its change that rises and falls with it, in the colour of blood, so noise, lighting and movement drop out. <b>Raw</b> shows plain Eulerian magnification instead.</p>
+          <p>The picture is also steadied. The app follows small shakes of the camera or your head, so the same patch of skin is measured from frame to frame.</p>
+          <p>By default only the skin of your face is exaggerated. The app learns your skin tone from your forehead and cheeks and leaves walls, hair and clothes alone; choose Skin to include your neck and hands too.</p>
           <p><b>Change only</b> hides the picture and shows just the exaggerated colour change on grey. <b>Original</b> turns the effect off so you can compare.</p>
-          <p>Movement and flickering light change colour too, so they get exaggerated along with your pulse. The app turns the effect down while it detects movement.</p>
+          <p>In Raw, movement and flickering light get exaggerated along with your pulse; <b>Cancel flicker</b> removes the change the background shares. Both methods turn the effect down while the app detects movement.</p>
           <p>The heart-rate number is a camera estimate, not a medical measurement. All processing happens on your device.</p>
+          <p class="sub">Version 3, November 2026.</p>
         </div>
       </details>
     </div>
@@ -372,7 +401,18 @@ const WIDE = [45, 150];               // band before a heart rate is found, bpm
 const WIDTHS = [6, 10, 18];           // half-width of the band once locked, bpm (narrow, normal, wide)
 const FLOOR_LEVELS = 0.008;           // noise floor slider step, in 8-bit levels of filtered change
 const SKIN_NEAR = 7, SKIN_FAR = 15;   // chroma distance (YCbCr units) from the face's skin tone: full weight, no weight
-const DEFAULTS = { region: 2, cancel: true, floor: 10, width: 1 };
+const DEFAULTS = { method: 0, region: 2, cancel: true, floor: 10, width: 1, strict: 30, stab: true };
+const BETA_TAU = 5;                   // seconds of history used to learn how each area follows the pulse
+// Colour signature of blood under the skin (relative change per channel, de Haan & van Leest 2014),
+// as a unit vector (PH) and the unit vector of its colour-only part (PC, brightness removed).
+const PBV = [0.33, 0.77, 0.53];
+const PH = (() => { const n = Math.hypot(...PBV); return PBV.map(v => v / n); })();
+const PC = (() => { const m = (PBV[0] + PBV[1] + PBV[2]) / 3, c = PBV.map(v => v - m), n = Math.hypot(...c); return c.map(v => v / n); })();
+const COEF_WIDE = (() => { const lo = WIDE[0] / 60, hi = WIDE[1] / 60, f0 = Math.sqrt(lo * hi), Q = f0 / (hi - lo), w0 = 2 * Math.PI * f0 / FPS, al = Math.sin(w0) / (2 * Q), a0 = 1 + al;
+  return { b0: al / a0, a1: -2 * Math.cos(w0) / a0, a2: (1 - al) / a0 }; })();
+// high-pass at 3 Hz: colour changes faster than any heartbeat, used to learn what noise looks like
+const HP3 = (() => { const w0 = 2 * Math.PI * 3 / FPS, al = Math.sin(w0) / (2 * 0.7071), a0 = 1 + al, c = Math.cos(w0);
+  return { b0: (1 + c) / 2 / a0, b1: -(1 + c) / a0, b2: (1 + c) / 2 / a0, a1: -2 * c / a0, a2: (1 - al) / a0 }; })();
 const PULSE_AMP = 0.007;              // demo face: fractional skin darkening per beat
 const $ = s => document.querySelector(s);
 const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
@@ -741,20 +781,27 @@ const els = {
   recFile: $('#recFile'), pickFile: $('#pickFile'), recLabel: $('#recLabel'), demoBtn: $('#demoBtn'),
   bpm: $('#bpm'), pill: $('#statusPill'), statusText: $('#statusText'), wave: $('#wave'), bandText: $('#bandText'),
   regionSeg: $('#regionSeg'), regionHelp: $('#regionHelp'), cancelChk: $('#cancelChk'), floor: $('#floor'), floorOut: $('#floorOut'),
-  widthSeg: $('#widthSeg'), resetTune: $('#resetTune')
+  widthSeg: $('#widthSeg'), resetTune: $('#resetTune'), hintChip: $('#hintChip'),
+  methodSeg: $('#methodSeg'), methodHelp: $('#methodHelp'), spotSeg: $('#spotSeg'), stabChk: $('#stabChk'),
+  strict: $('#strict'), strictOut: $('#strictOut'), strictRow: $('#strictRow'), floorRow: $('#floorRow'), cancelRow: $('#cancelRow')
 };
 const octx = els.overlay.getContext('2d');
 const wctx = els.wave.getContext('2d');
 const acv = document.createElement('canvas');
 const actx = acv.getContext('2d', { willReadFrequently: true });
+actx.imageSmoothingEnabled = true; actx.imageSmoothingQuality = 'high';   // average every pixel when shrinking, not a sparse sample
 const dcv = document.createElement('canvas');
 const dctx = dcv.getContext('2d', { willReadFrequently: true });
 
 /* ================= renderers ================= */
+// The change field (uDelta) lives in steadied coordinates, so it is looked up at uv - uShift.
+// uMask is a per-pixel weight (skin, face) at analysis resolution, in picture coordinates.
 const VS = 'attribute vec2 p;varying vec2 uv;uniform float uMirror;' +
   'void main(){uv=vec2(p.x*0.5+0.5,0.5-p.y*0.5);if(uMirror>0.5)uv.x=1.0-uv.x;gl_Position=vec4(p,0.0,1.0);}';
-const FS = 'precision mediump float;varying vec2 uv;uniform sampler2D uFrame;uniform sampler2D uDelta;uniform float uMode;' +
-  'void main(){vec3 c=texture2D(uFrame,uv).rgb;vec3 d=texture2D(uDelta,uv).rgb-vec3(0.5019608);vec3 o;' +
+const FS = 'precision mediump float;varying vec2 uv;uniform sampler2D uFrame;uniform sampler2D uDelta;uniform sampler2D uMask;' +
+  'uniform float uMode;uniform vec2 uShift;' +
+  'void main(){vec3 c=texture2D(uFrame,uv).rgb;float m=texture2D(uMask,uv).r;' +
+  'vec3 d=(texture2D(uDelta,uv-uShift).rgb-vec3(0.5019608))*m;vec3 o;' +
   'if(uMode<0.5){o=c+d;}else if(uMode<1.5){float l=dot(c,vec3(0.299,0.587,0.114));o=vec3(0.16+0.3*l)+d*1.6;}else{o=c;}' +
   'gl_FragColor=vec4(clamp(o,0.0,1.0),1.0);}';
 
@@ -790,15 +837,16 @@ function makeGL(canvas) {
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
       return t;
     };
-    const tFrame = mkTex(0), tDelta = mkTex(1);
+    const tFrame = mkTex(0), tDelta = mkTex(1), tMask = mkTex(2);
     gl.uniform1i(gl.getUniformLocation(prog, 'uFrame'), 0);
     gl.uniform1i(gl.getUniformLocation(prog, 'uDelta'), 1);
-    const uMode = gl.getUniformLocation(prog, 'uMode'), uMirror = gl.getUniformLocation(prog, 'uMirror');
+    gl.uniform1i(gl.getUniformLocation(prog, 'uMask'), 2);
+    const uMode = gl.getUniformLocation(prog, 'uMode'), uMirror = gl.getUniformLocation(prog, 'uMirror'), uShift = gl.getUniformLocation(prog, 'uShift');
     gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);
-    let dw = 0, dh = 0;
+    let dw = 0, dh = 0, mw0 = 0, mh0 = 0;
     return {
       kind: 'gl',
-      draw(src, delta, gw, gh, mode, mirror) {
+      draw(src, delta, gw, gh, mask, mw, mh, mode, mirror, sx, sy) {
         if (gl.isContextLost()) return;
         gl.viewport(0, 0, canvas.width, canvas.height);
         gl.activeTexture(gl.TEXTURE0);
@@ -808,11 +856,16 @@ function makeGL(canvas) {
         gl.bindTexture(gl.TEXTURE_2D, tDelta);
         if (gw !== dw || gh !== dh) { gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gw, gh, 0, gl.RGBA, gl.UNSIGNED_BYTE, delta); dw = gw; dh = gh; }
         else gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, gw, gh, gl.RGBA, gl.UNSIGNED_BYTE, delta);
+        gl.activeTexture(gl.TEXTURE2);
+        gl.bindTexture(gl.TEXTURE_2D, tMask);
+        if (mw !== mw0 || mh !== mh0) { gl.texImage2D(gl.TEXTURE_2D, 0, gl.LUMINANCE, mw, mh, 0, gl.LUMINANCE, gl.UNSIGNED_BYTE, mask); mw0 = mw; mh0 = mh; }
+        else gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, mw, mh, gl.LUMINANCE, gl.UNSIGNED_BYTE, mask);
         gl.uniform1f(uMode, mode);
         gl.uniform1f(uMirror, mirror ? 1 : 0);
+        gl.uniform2f(uShift, sx, sy);
         gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
       },
-      reset() { dw = dh = 0; }
+      reset() { dw = dh = mw0 = mh0 = 0; }
     };
   } catch (e) {
     return null;
@@ -823,45 +876,48 @@ function makeGL(canvas) {
 function makeCPU(canvas) {
   const ctx = canvas.getContext('2d', { willReadFrequently: true });
   if (!ctx) return null;
-  let key = '', xa, xb, xf, ya, yb, yf;
-  const table = (n, cells, flip) => {
+  const table = (n, cells, flip, shift) => {
     const a = new Int32Array(n), b = new Int32Array(n), f = new Float32Array(n);
     for (let i = 0; i < n; i++) {
       const s = flip ? n - 1 - i : i;
-      const u = clamp((s + 0.5) / n * cells - 0.5, 0, cells - 1);
+      const u = clamp((s + 0.5) / n * cells - 0.5 - shift, 0, cells - 1);
       a[i] = Math.floor(u); b[i] = Math.min(a[i] + 1, cells - 1); f[i] = u - a[i];
     }
     return [a, b, f];
   };
   return {
     kind: 'cpu',
-    draw(src, delta, gw, gh, mode, mirror) {
+    draw(src, delta, gw, gh, mask, mw, mh, mode, mirror, sx, sy) {
       const W = canvas.width, H = canvas.height;
       ctx.save();
       if (mirror) { ctx.translate(W, 0); ctx.scale(-1, 1); }
       ctx.drawImage(src, 0, 0, W, H);
       ctx.restore();
       if (mode === 2) return;
-      const k = `${W}x${H}x${gw}x${gh}x${mirror}`;
-      if (k !== key) { key = k; [xa, xb, xf] = table(W, gw, mirror); [ya, yb, yf] = table(H, gh, false); }
+      const [xa, xb, xf] = table(W, gw, mirror, sx * gw), [ya, yb, yf] = table(H, gh, false, sy * gh);
+      const [ma, mb, mf] = table(W, mw, mirror, 0), [na, nb, nf] = table(H, mh, false, 0);
       const img = ctx.getImageData(0, 0, W, H), d = img.data;
       const gain = mode === 1 ? 1.6 : 1;
       for (let y = 0, p = 0; y < H; y++) {
         const ra = ya[y] * gw, rb = yb[y] * gw, wy = yf[y], vy = 1 - wy;
+        const qa = na[y] * mw, qb = nb[y] * mw, my = nf[y];
         for (let x = 0; x < W; x++, p += 4) {
-          const wx = xf[x], vx = 1 - wx;
-          const i00 = (ra + xa[x]) * 4, i01 = (ra + xb[x]) * 4, i10 = (rb + xa[x]) * 4, i11 = (rb + xb[x]) * 4;
+          const mx = mf[x];
+          const m = ((1 - mx) * mask[qa + ma[x]] + mx * mask[qa + mb[x]]) * (1 - my) + ((1 - mx) * mask[qb + ma[x]] + mx * mask[qb + mb[x]]) * my;
           let base0 = d[p], base1 = d[p + 1], base2 = d[p + 2];
           if (mode === 1) { const l = 0.299 * base0 + 0.587 * base1 + 0.114 * base2; base0 = base1 = base2 = 41 + 0.3 * l; }
-          for (let c = 0; c < 3; c++) {
-            const dv = vx * vy * delta[i00 + c] + wx * vy * delta[i01 + c] + vx * wy * delta[i10 + c] + wx * wy * delta[i11 + c] - 128;
-            d[p + c] = (c === 0 ? base0 : c === 1 ? base1 : base2) + dv * gain;
-          }
+          if (m < 1) { if (mode !== 1) continue; d[p] = base0; d[p + 1] = base1; d[p + 2] = base2; continue; }
+          const wx = xf[x], vx = 1 - wx;
+          const i00 = (ra + xa[x]) * 4, i01 = (ra + xb[x]) * 4, i10 = (rb + xa[x]) * 4, i11 = (rb + xb[x]) * 4;
+          const k = m / 255 * gain;
+          d[p] = base0 + (vx * vy * delta[i00] + wx * vy * delta[i01] + vx * wy * delta[i10] + wx * wy * delta[i11] - 128) * k;
+          d[p + 1] = base1 + (vx * vy * delta[i00 + 1] + wx * vy * delta[i01 + 1] + vx * wy * delta[i10 + 1] + wx * wy * delta[i11 + 1] - 128) * k;
+          d[p + 2] = base2 + (vx * vy * delta[i00 + 2] + wx * vy * delta[i01 + 2] + vx * wy * delta[i10 + 2] + wx * wy * delta[i11 + 2] - 128) * k;
         }
       }
       ctx.putImageData(img, 0, 0);
     },
-    reset() { key = ''; }
+    reset() { /* tables are rebuilt each frame */ }
   };
 }
 
@@ -869,14 +925,27 @@ function makeCPU(canvas) {
 const TRACE_CAP = 512;
 const S = {
   src: null, token: 0, amp: 80, mode: 0, renderer: null,
-  grid: null, cells: null, tmp: null, out: null, z: null, delta: null,
-  coef: null, lastT: null, needInit: true, rampStart: 0, guard: 1, stillSince: null, prevT: 0, gridT: 0,
-  band: WIDE.slice(), face: null, faceSeen: 0, frameNo: 0,
-  hr: { t: [], c: [], ests: [], last: -1e9, bpm: null, lockBpm: null, lastConf: 0, state: 'measuring', span: 0 },
-  tr: { z: [0, 0, 0, 0], t: new Float64Array(TRACE_CAP), v: new Float32Array(TRACE_CAP), head: 0, n: 0 },
-  trCoef: null, trInit: true, trPrevG: 0, trPrevT: 0, trGridT: 0,
-  region: DEFAULTS.region, cancel: DEFAULTS.cancel, floor: DEFAULTS.floor, width: DEFAULTS.width,
-  skinRef: null, skinW: null, nearW: null, mask: null, maskT: null, maskTmp: null, maskFresh: true, bgRef: null, bgShare: 0,
+  grid: null, cells: null, tmp: null, out: null, filt: null, prev: null, z: null, delta: null,
+  coef: null, lastT: null, firstT: null, needInit: true, rampStart: 0, guard: 1, stillSince: null, prevT: 0, gridT: 0,
+  band: WIDE.slice(), frameNo: 0,
+  hr: { ests: [], last: -1e9, bpm: null, lockBpm: null, lastConf: 0, state: 'measuring', span: 0 },
+  tr: { t: new Float64Array(TRACE_CAP), v: new Float32Array(TRACE_CAP), head: 0, n: 0 },
+  // settings
+  method: DEFAULTS.method, region: DEFAULTS.region, cancel: DEFAULTS.cancel, floor: DEFAULTS.floor,
+  width: DEFAULTS.width, strict: DEFAULTS.strict, stab: DEFAULTS.stab,
+  // steadying: offset of the steadied grid from the picture, in analysis pixels
+  ox: 0, oy: 0, key: null, lkErr: 0, gray: null, grayT: null, lkI: null,
+  // face (steadied coordinates, 0–1) and a tapped spot
+  face: null, faceTarget: null, faceHist: [], faceSeen: -1e9, spot: null, useSpot: false,
+  // masks
+  skinRef: null, skinW: null, nearW: null, regionW: null, pskin: null, pmask: null, pmaskT: null, pmaskT2: null, pmask8: null, pmaskFresh: true,
+  bgRef: null, bgShare: 0,
+  // clean method: pulse reference and per-cell regression onto it
+  ref: { m: null, zb: new Float64Array(12), zw: new Float64Array(12), zh: new Float64Array(6), Q: new Float64Array(6), vp: 0, w: [0, 1, 0] },
+  hrBuf: { v: new Float32Array(512), head: 0, n: 0 },
+  refReset: true, prevRoi: null, pn: 0, Syp: null, Syy: null, Spp: 0, gate: null, gateT: null, ampA: null, cleanCover: 0,
+  pool: null, poolT: null, r2: null, bgR2: null, chance: 0.04, r2lo: 0, r2hi: 0,
+  cm: null, cmFresh: true, light: [0, 0, 0], lightShare: 0, lastFrameDt: 1 / 30,
   facing: 'user', stream: null, objUrl: null, wake: null,
   stats: { frames: 0, ms: 0, since: performance.now() }
 };
@@ -932,20 +1001,27 @@ function setupGrid(w, h) {
   let gw, gh;
   if (w >= h) { gw = GRID; gh = Math.max(6, Math.round(GRID * h / w)); }
   else { gh = GRID; gw = Math.max(6, Math.round(GRID * w / h)); }
-  acv.width = gw * SUB; acv.height = gh * SUB;
-  const n = gw * gh * 3;
-  S.grid = { gw, gh, n, sw: w, sh: h };
+  const aw = gw * SUB, ah = gh * SUB;
+  acv.width = aw; acv.height = ah;
+  const nc = gw * gh, n = nc * 3, np = aw * ah;
+  S.grid = { gw, gh, n, aw, ah, sw: w, sh: h };
   S.cells = new Float32Array(n); S.tmp = new Float32Array(n); S.out = new Float32Array(n);
   S.filt = new Float32Array(n); S.prev = new Float32Array(n);
   S.z = [new Float32Array(n), new Float32Array(n), new Float32Array(n), new Float32Array(n)];
-  S.delta = new Uint8Array(gw * gh * 4);
+  S.Syp = new Float32Array(n); S.Syy = new Float32Array(n); S.Spp = 0;
+  S.delta = new Uint8Array(nc * 4);
   for (let i = 0; i < S.delta.length; i++) S.delta[i] = (i & 3) === 3 ? 255 : 128;
-  const nc = gw * gh;
-  S.skinW = new Float32Array(nc); S.nearW = new Float32Array(nc); S.mask = new Float32Array(nc);
-  S.maskT = new Float32Array(nc); S.maskTmp = new Float32Array(nc); S.maskFresh = true;
-  const ds = 200 / Math.max(w, h);
+  S.skinW = new Float32Array(nc); S.nearW = new Float32Array(nc); S.regionW = new Float32Array(nc);
+  S.gate = new Float32Array(nc); S.gateT = new Float32Array(nc); S.ampA = new Float32Array(nc);
+  S.pool = new Float32Array(nc * 4); S.poolT = new Float32Array(nc); S.r2 = new Float32Array(nc); S.bgR2 = new Float32Array(nc); S.chance = 0.04;
+  S.cm = new Float32Array(n); S.cmFresh = true; S.light = [0, 0, 0];
+  S.gray = new Float32Array(np); S.grayT = new Float32Array(np);
+  S.pskin = new Float32Array(np); S.pmask = new Float32Array(np); S.pmaskT = new Float32Array(np); S.pmaskT2 = new Float32Array(np);
+  S.pmask8 = new Uint8Array(np); S.pmaskFresh = true;
+  S.ox = 0; S.oy = 0; S.key = null;
+  const ds = 240 / Math.max(w, h);
   dcv.width = Math.max(32, Math.round(w * ds)); dcv.height = Math.max(32, Math.round(h * ds));
-  S.needInit = true;
+  S.needInit = true; S.refReset = true;
   if (S.renderer && S.renderer.reset) S.renderer.reset();
   sizeView();
 }
@@ -961,22 +1037,14 @@ function setBand(lo, hi) {
   S.coef = design(FPS, lo, hi);
   S.needInit = true;
 }
-
-function blockAverage(px, g, out) {
-  const aw = g.gw * SUB, inv = 1 / (SUB * SUB);
-  for (let cy = 0; cy < g.gh; cy++) {
-    for (let cx = 0; cx < g.gw; cx++) {
-      let r = 0, gg = 0, b = 0;
-      for (let y = cy * SUB; y < cy * SUB + SUB; y++) {
-        let p = (y * aw + cx * SUB) * 4;
-        for (let x = 0; x < SUB; x++, p += 4) { r += px[p]; gg += px[p + 1]; b += px[p + 2]; }
-      }
-      const o = (cy * g.gw + cx) * 3;
-      out[o] = r * inv; out[o + 1] = gg * inv; out[o + 2] = b * inv;
-    }
-  }
+function bq2(xv, z, c) {
+  const y1 = c.b0 * xv + z[0]; z[0] = -c.a1 * y1 + z[1]; z[1] = -c.b0 * xv - c.a2 * y1;
+  const y2 = c.b0 * y1 + z[2]; z[2] = -c.a1 * y2 + z[3]; z[3] = -c.b0 * y1 - c.a2 * y2;
+  return y2;
 }
-// Separable 1-2-1 blur, applied twice: like stepping one more level down a Gaussian pyramid.
+const smooth = (a, b, v) => { const q = clamp((v - a) / (b - a), 0, 1); return q * q * (3 - 2 * q); };
+
+// Separable 1-2-1 blur of a 3-channel cell grid, applied twice: like one more level down a Gaussian pyramid.
 function blur(a, t, g) {
   const { gw, gh } = g;
   for (let pass = 0; pass < 2; pass++) {
@@ -990,15 +1058,27 @@ function blur(a, t, g) {
     }
   }
 }
-// Area-weighted mean colour of a rectangle given in 0–1 coordinates.
-function rectMean(px, aw, ah, r, acc) {
+// One 1-2-1 pass both ways on a single-channel plane; result back in a.
+function blurPlane(a, t, w, h) {
+  for (let y = 0; y < h; y++) {
+    const r = y * w;
+    for (let x = 0; x < w; x++) t[r + x] = 0.25 * a[r + Math.max(0, x - 1)] + 0.5 * a[r + x] + 0.25 * a[r + Math.min(w - 1, x + 1)];
+  }
+  for (let y = 0; y < h; y++) {
+    const u = Math.max(0, y - 1) * w, r = y * w, dn = Math.min(h - 1, y + 1) * w;
+    for (let x = 0; x < w; x++) a[r + x] = 0.25 * t[u + x] + 0.5 * t[r + x] + 0.25 * t[dn + x];
+  }
+}
+// Area-weighted mean colour of a rectangle given in 0–1 picture coordinates, optionally weighted per pixel.
+function rectMean(px, aw, ah, r, acc, wts) {
   const X0 = clamp(r.x0, 0, 1) * aw, X1 = clamp(r.x1, 0, 1) * aw, Y0 = clamp(r.y0, 0, 1) * ah, Y1 = clamp(r.y1, 0, 1) * ah;
   for (let y = Math.floor(Y0); y < Math.ceil(Y1); y++) {
     const wy = Math.min(y + 1, Y1) - Math.max(y, Y0);
     if (wy <= 0) continue;
     for (let x = Math.floor(X0); x < Math.ceil(X1); x++) {
-      const w = (Math.min(x + 1, X1) - Math.max(x, X0)) * wy;
+      let w = (Math.min(x + 1, X1) - Math.max(x, X0)) * wy;
       if (w <= 0) continue;
+      if (wts) w *= wts[y * aw + x];
       const p = (y * aw + x) * 4;
       acc[0] += w * px[p]; acc[1] += w * px[p + 1]; acc[2] += w * px[p + 2]; acc[3] += w;
     }
@@ -1007,66 +1087,456 @@ function rectMean(px, aw, ah, r, acc) {
 function ycc(r, g, b) {
   return [0.299 * r + 0.587 * g + 0.114 * b, 128 - 0.168736 * r - 0.331264 * g + 0.5 * b, 128 + 0.5 * r - 0.418688 * g - 0.081312 * b];
 }
+// How skin-like a colour is: close to the measured skin tone, or in the usual skin range before one is known.
+function skinWeight(Y, cb, cr, R) {
+  if (R) {
+    const dc = cb - R.cb, dr = cr - R.cr, dd = Math.sqrt(dc * dc + dr * dr), yr = Y / Math.max(1, R.y);
+    return clamp((SKIN_FAR - dd) / (SKIN_FAR - SKIN_NEAR), 0, 1) * clamp((yr - 0.3) / 0.2, 0, 1) * clamp((2.0 - yr) / 0.4, 0, 1);
+  }
+  return clamp(Math.min(cb - 77, 127 - cb, cr - 133, 173 - cr) / 4 + 0.5, 0, 1) * clamp((Y - 40) / 20, 0, 1);
+}
 function updateSkinRef(roi) {
   const [y, cb, cr] = ycc(roi[0], roi[1], roi[2]);
   const R = S.skinRef;
   if (!R) S.skinRef = { y, cb, cr };
   else { const q = 0.03; R.y += q * (y - R.y); R.cb += q * (cb - R.cb); R.cr += q * (cr - R.cr); }
 }
-// Per-cell weights: how skin-like each cell is, how close it is to the face, and the mask actually applied.
-function updateMask(g, x) {
-  const { gw, gh } = g, R = S.skinRef, f = S.face;
-  const skin = S.skinW, near = S.nearW, tgt = S.maskT, tmp = S.maskTmp;
-  for (let cy = 0; cy < gh; cy++) {
-    for (let cx = 0; cx < gw; cx++) {
-      const c = cy * gw + cx, o = c * 3;
-      const [Y, cb, cr] = ycc(x[o], x[o + 1], x[o + 2]);
-      let w;
-      if (R) {
-        const dd = Math.hypot(cb - R.cb, cr - R.cr), yr = Y / Math.max(1, R.y);
-        w = clamp((SKIN_FAR - dd) / (SKIN_FAR - SKIN_NEAR), 0, 1) * clamp((yr - 0.3) / 0.2, 0, 1) * clamp((2.0 - yr) / 0.4, 0, 1);
-      } else {
-        // no face yet: a broad, typical skin-tone range
-        w = clamp(Math.min(cb - 77, 127 - cb, cr - 133, 173 - cr) / 4 + 0.5, 0, 1) * clamp((Y - 40) / 20, 0, 1);
-      }
-      skin[c] = w;
-      let fw = 0, nw = 0;
-      if (f) {
-        const u = (cx + 0.5) / gw, v = (cy + 0.5) / gh;
-        const r = Math.hypot((u - (f.x + f.w / 2)) / (f.w * 0.6), (v - (f.y + f.h * 0.5)) / (f.h * 0.75));
-        fw = clamp((1.15 - r) / 0.3, 0, 1);
-        nw = clamp((1.5 - r) / 0.25, 0, 1);
-      }
-      near[c] = nw;
-      tgt[c] = S.region === 0 ? 1 : S.region === 1 || !f ? w : w * fw;
-    }
-  }
-  // soften the edges, then ease toward the new mask so it never flickers
-  for (let y = 0; y < gh; y++) for (let x2 = 0; x2 < gw; x2++) {
-    const c = y * gw + x2;
-    tmp[c] = 0.25 * tgt[y * gw + Math.max(0, x2 - 1)] + 0.5 * tgt[c] + 0.25 * tgt[y * gw + Math.min(gw - 1, x2 + 1)];
-  }
-  for (let y = 0; y < gh; y++) for (let x2 = 0; x2 < gw; x2++) {
-    const c = y * gw + x2;
-    tgt[c] = 0.25 * tmp[Math.max(0, y - 1) * gw + x2] + 0.5 * tmp[c] + 0.25 * tmp[Math.min(gh - 1, y + 1) * gw + x2];
-  }
-  const m = S.mask, q = S.maskFresh ? 1 : 0.2;
-  for (let c = 0; c < gw * gh; c++) m[c] += q * (tgt[c] - m[c]);
-  S.maskFresh = false;
+// The area being measured: a tapped spot, the tracked face, or nothing. Steadied coordinates.
+function activeBox() { return S.useSpot && S.spot ? S.spot : S.face; }
+function toPicture(r, g) {
+  const dx = S.ox / g.aw, dy = S.oy / g.ah;
+  return { x0: r.x0 + dx, x1: r.x1 + dx, y0: r.y0 + dy, y1: r.y1 + dy };
 }
 function roiRects() {
-  const f = S.face;
+  const f = activeBox();
   if (!f) return [{ x0: 0.32, x1: 0.68, y0: 0.3, y1: 0.7 }];
+  if (S.useSpot && S.spot) return [{ x0: f.x + 0.15 * f.w, x1: f.x + 0.85 * f.w, y0: f.y + 0.15 * f.h, y1: f.y + 0.85 * f.h }];
   const R = (a, b, c, d) => ({ x0: f.x + a * f.w, x1: f.x + b * f.w, y0: f.y + c * f.h, y1: f.y + d * f.h });
   return [R(0.30, 0.70, 0.12, 0.30), R(0.17, 0.38, 0.55, 0.75), R(0.62, 0.83, 0.55, 0.75)];
 }
 
+/* ---------- steadying: track the measured area from frame to frame (Lucas–Kanade, translation only) ---------- */
+function makeGray(px, g) {
+  const G = S.gray, n = g.aw * g.ah;
+  for (let i = 0, p = 0; i < n; i++, p += 4) G[i] = 0.299 * px[p] + 0.587 * px[p + 1] + 0.114 * px[p + 2];
+  blurPlane(G, S.grayT, g.aw, g.ah);
+}
+function sampleGray(G, aw, ah, x, y) {
+  x = x < 0 ? 0 : x > aw - 1.001 ? aw - 1.001 : x;
+  y = y < 0 ? 0 : y > ah - 1.001 ? ah - 1.001 : y;
+  const ix = x | 0, iy = y | 0, fx = x - ix, fy = y - iy, i = iy * aw + ix;
+  return (G[i] * (1 - fx) + G[i + 1] * fx) * (1 - fy) + (G[i + aw] * (1 - fx) + G[i + aw + 1] * fx) * fy;
+}
+function buildKey(g, t) {
+  const { aw, ah } = g, f = activeBox();
+  let x0, x1, y0, y1;
+  if (f) {
+    const cx = (f.x + f.w / 2) * aw, cy = (f.y + f.h / 2) * ah, hw = f.w * aw * 0.7, hh = f.h * ah * 0.8;
+    x0 = cx - hw; x1 = cx + hw; y0 = cy - hh; y1 = cy + hh;
+  } else { x0 = aw * 0.2; x1 = aw * 0.8; y0 = ah * 0.15; y1 = ah * 0.85; }
+  x0 = Math.max(2, Math.round(x0)); x1 = Math.min(aw - 3, Math.round(x1));
+  y0 = Math.max(2, Math.round(y0)); y1 = Math.min(ah - 3, Math.round(y1));
+  if (x1 - x0 < 8 || y1 - y0 < 8) { S.key = null; return; }
+  const step = Math.max(1, Math.round(Math.sqrt((x1 - x0) * (y1 - y0) / 2500)));
+  const xs = [], ys = [], K = [], Kx = [], Ky = [];
+  const G = S.gray, ox = S.ox, oy = S.oy;
+  let a11 = 0, a12 = 0, a22 = 0, mK = 0;
+  for (let y = y0; y <= y1; y += step) for (let x = x0; x <= x1; x += step) {
+    const gx = (sampleGray(G, aw, ah, x + 1 + ox, y + oy) - sampleGray(G, aw, ah, x - 1 + ox, y + oy)) / 2;
+    const gy = (sampleGray(G, aw, ah, x + ox, y + 1 + oy) - sampleGray(G, aw, ah, x + ox, y - 1 + oy)) / 2;
+    const v = sampleGray(G, aw, ah, x + ox, y + oy);
+    xs.push(x); ys.push(y); K.push(v); Kx.push(gx); Ky.push(gy);
+    a11 += gx * gx; a12 += gx * gy; a22 += gy * gy; mK += v;
+  }
+  const n = K.length;
+  mK /= n;
+  let sK = 0;
+  for (let j = 0; j < n; j++) sK += (K[j] - mK) * (K[j] - mK);
+  sK = Math.sqrt(sK / n);
+  if (sK < 1.5 || a11 * a22 - a12 * a12 < 1e-3) { S.key = null; return; }   // too flat to track
+  S.key = { xs: Float32Array.from(xs), ys: Float32Array.from(ys), K: Float32Array.from(K), Kx: Float32Array.from(Kx), Ky: Float32Array.from(Ky), a11, a12, a22, mK, sK, at: t };
+  if (!S.lkI || S.lkI.length < n) S.lkI = new Float32Array(n);
+}
+function track(g, t) {
+  if (!S.stab) { if (S.ox || S.oy) { S.ox = 0; S.oy = 0; S.needInit = true; S.refReset = true; } S.key = null; S.lkErr = 0; return; }
+  const k = S.key;
+  if (!k) { buildKey(g, t); return; }
+  const n = k.K.length, G = S.gray, aw = g.aw, ah = g.ah, I = S.lkI;
+  const det = k.a11 * k.a22 - k.a12 * k.a12;
+  let ox = S.ox, oy = S.oy, err = 0;
+  for (let it = 0; it < 5; it++) {
+    let mI = 0;
+    for (let j = 0; j < n; j++) { const v = sampleGray(G, aw, ah, k.xs[j] + ox, k.ys[j] + oy); I[j] = v; mI += v; }
+    mI /= n;
+    let sI = 0;
+    for (let j = 0; j < n; j++) sI += (I[j] - mI) * (I[j] - mI);
+    sI = Math.sqrt(sI / n) || 1;
+    // compare shapes, not brightness: exposure changes are divided out
+    const sc = k.sK / sI;
+    let b1 = 0, b2 = 0, e2 = 0;
+    for (let j = 0; j < n; j++) { const e = (I[j] - mI) * sc - (k.K[j] - k.mK); b1 += k.Kx[j] * e; b2 += k.Ky[j] * e; e2 += e * e; }
+    err = Math.sqrt(e2 / n) / k.sK;
+    const dx = -(k.a22 * b1 - k.a12 * b2) / det, dy = -(k.a11 * b2 - k.a12 * b1) / det;
+    ox += clamp(dx, -2, 2); oy += clamp(dy, -2, 2);
+    if (dx * dx + dy * dy < 0.0004) break;
+  }
+  if (!isFinite(ox + oy) || Math.abs(ox) > aw * 0.3 || Math.abs(oy) > ah * 0.3) {
+    S.ox = 0; S.oy = 0; S.key = null; S.needInit = true; S.refReset = true; S.lkErr = 1;
+    return;
+  }
+  S.ox = ox; S.oy = oy; S.lkErr = err;
+  if (t - k.at > 1.0 || err > 0.6) buildKey(g, t);
+}
+// Average each SUB×SUB block of the steadied grid; blocks sit at a fractional offset, so edge pixels are part-weighted.
+function stabCells(px, g, out) {
+  const { gw, gh, aw, ah } = g;
+  const ix = Math.floor(S.ox), iy = Math.floor(S.oy), fx = S.ox - ix, fy = S.oy - iy;
+  const WX = new Float32Array(SUB + 1), WY = new Float32Array(SUB + 1);
+  for (let k = 0; k <= SUB; k++) { WX[k] = k === 0 ? 1 - fx : k === SUB ? fx : 1; WY[k] = k === 0 ? 1 - fy : k === SUB ? fy : 1; }
+  const inv = 1 / (SUB * SUB);
+  for (let cy = 0; cy < gh; cy++) {
+    for (let cx = 0; cx < gw; cx++) {
+      let r = 0, gg = 0, b = 0;
+      for (let ky = 0; ky <= SUB; ky++) {
+        const wy = WY[ky]; if (!wy) continue;
+        const yy = clamp(cy * SUB + iy + ky, 0, ah - 1) * aw;
+        for (let kx = 0; kx <= SUB; kx++) {
+          const w = wy * WX[kx]; if (!w) continue;
+          const p = (yy + clamp(cx * SUB + ix + kx, 0, aw - 1)) * 4;
+          r += w * px[p]; gg += w * px[p + 1]; b += w * px[p + 2];
+        }
+      }
+      const o = (cy * gw + cx) * 3;
+      out[o] = r * inv; out[o + 1] = gg * inv; out[o + 2] = b * inv;
+    }
+  }
+}
+
+/* ---------- where to show the change ---------- */
+// Per pixel, in picture coordinates: skin weight, and the region mask the renderer multiplies in.
+function updatePixelMask(px, g) {
+  const { aw, ah } = g, R = S.skinRef, sk = S.pskin, T = S.pmaskT, M = S.pmask, M8 = S.pmask8, region = S.region;
+  const f = activeBox();
+  let ecx = 0, ecy = 0, erx = 1, ery = 1;
+  if (f) { ecx = (f.x + f.w / 2) * aw + S.ox; ecy = (f.y + f.h * 0.5) * ah + S.oy; erx = f.w * aw * (S.useSpot ? 0.5 : 0.6); ery = f.h * ah * (S.useSpot ? 0.5 : 0.75); }
+  for (let y = 0, i = 0; y < ah; y++) {
+    for (let x = 0; x < aw; x++, i++) {
+      const p = i * 4, r = px[p], gg = px[p + 1], b = px[p + 2];
+      const Y = 0.299 * r + 0.587 * gg + 0.114 * b, cb = 128 - 0.168736 * r - 0.331264 * gg + 0.5 * b, cr = 128 + 0.5 * r - 0.418688 * gg - 0.081312 * b;
+      const w = skinWeight(Y, cb, cr, R);
+      sk[i] = w;
+      let v;
+      if (region === 0) v = 1;
+      else if (region === 1 || !f) v = w;
+      else { const dx = (x + 0.5 - ecx) / erx, dy = (y + 0.5 - ecy) / ery; v = w * clamp((1.12 - Math.sqrt(dx * dx + dy * dy)) / 0.2, 0, 1); }
+      T[i] = v;
+    }
+  }
+  blurPlane(T, S.pmaskT2, aw, ah);
+  const q = S.pmaskFresh ? 1 : 0.5;
+  for (let i = 0; i < M.length; i++) { M[i] += q * (T[i] - M[i]); M8[i] = (M[i] * 255 + 0.5) | 0; }
+  S.pmaskFresh = false;
+}
+// Per cell, in steadied coordinates: skin weight, nearness to the measured area, and region weight.
+function updateCellWeights(g, x) {
+  const { gw, gh } = g, R = S.skinRef, f = activeBox(), region = S.region;
+  for (let cy = 0; cy < gh; cy++) {
+    for (let cx = 0; cx < gw; cx++) {
+      const c = cy * gw + cx, o = c * 3;
+      const [Y, cb, cr] = ycc(x[o], x[o + 1], x[o + 2]);
+      const w = skinWeight(Y, cb, cr, R);
+      S.skinW[c] = w;
+      let fw = 0, nw = 0;
+      if (f) {
+        const u = (cx + 0.5) / gw, v = (cy + 0.5) / gh;
+        const dx = (u - (f.x + f.w / 2)) / (f.w * 0.6), dy = (v - (f.y + f.h * 0.5)) / (f.h * 0.75), r = Math.sqrt(dx * dx + dy * dy);
+        fw = clamp((1.15 - r) / 0.3, 0, 1);
+        nw = clamp((1.5 - r) / 0.25, 0, 1);
+      }
+      S.nearW[c] = nw;
+      S.regionW[c] = region === 0 ? 1 : region === 1 || !f ? w : w * fw;
+    }
+  }
+}
+
+// The colour change shared by the areas away from the face and skin: the camera's exposure and white balance at work,
+// or the room light changing. Relative to each area's recent colour, so dark and bright areas count alike.
+function lightingChange(g, dt) {
+  const nc = g.gw * g.gh, x = S.cells, m = S.cm, skin = S.skinW, near = S.nearW;
+  const a = S.cmFresh ? 1 : 1 - Math.exp(-clamp(dt, 0, 0.2) / 1.5);
+  let s0 = 0, s1 = 0, s2 = 0, m0 = 0, m1 = 0, m2 = 0, wn = 0;
+  for (let c = 0, o = 0; c < nc; c++, o += 3) {
+    const w = clamp((0.3 - skin[c]) / 0.2, 0, 1) * (1 - near[c]);
+    if (w > 0 && !S.cmFresh && m[o] > 12 && m[o + 1] > 12 && m[o + 2] > 12 && m[o] < 245 && m[o + 1] < 245 && m[o + 2] < 245) {
+      s0 += w * (x[o] - m[o]); s1 += w * (x[o + 1] - m[o + 1]); s2 += w * (x[o + 2] - m[o + 2]);
+      m0 += w * m[o]; m1 += w * m[o + 1]; m2 += w * m[o + 2]; wn += w;
+    }
+    m[o] += a * (x[o] - m[o]); m[o + 1] += a * (x[o + 1] - m[o + 1]); m[o + 2] += a * (x[o + 2] - m[o + 2]);
+  }
+  S.cmFresh = false;
+  S.lightShare = wn / nc;
+  if (wn >= 0.08 * nc && m0 > 0 && m1 > 0 && m2 > 0) {
+    S.light[0] = clamp(s0 / m0, -0.2, 0.2); S.light[1] = clamp(s1 / m1, -0.2, 0.2); S.light[2] = clamp(s2 / m2, -0.2, 0.2);
+  } else S.light[0] = S.light[1] = S.light[2] = 0;
+}
+
+/* ---------- face finding ---------- */
+// Best face in the frame; a weaker detection is accepted when it agrees with where the face was.
+function detectBest(img, prior) {
+  const { width: W, height: H, data } = img;
+  const gray = new Uint8Array(W * H);
+  for (let i = 0, p = 0; i < W * H; i++, p += 4) gray[i] = (2 * data[p] + 7 * data[p + 1] + data[p + 2]) / 10;
+  const minDim = Math.min(W, H);
+  let dets = pico.run_cascade({ pixels: gray, nrows: H, ncols: W, ldim: W }, getClassifier(), {
+    shiftfactor: 0.1, minsize: Math.max(20, Math.round(minDim * 0.12)), maxsize: minDim, scalefactor: 1.1
+  });
+  dets = pico.cluster_detections(dets, 0.2);
+  let best = null, bestScore = -1;
+  for (const d of dets) {
+    const box = { x: (d[1] - d[2] / 2) / W, y: (d[0] - d[2] / 2) / H, w: d[2] / W, h: d[2] / H };
+    const iou = prior ? boxIoU(prior, box) : 0;
+    const need = iou > 0.25 ? 6 : 20;
+    const score = d[3] + 40 * iou;
+    if (d[3] >= need && score > bestScore) { best = box; bestScore = score; }
+  }
+  return best;
+}
+function updateFace(src, g, t) {
+  if (src.faceHint) {
+    if (!S.face) { S.face = { ...src.faceHint }; S.faceTarget = S.face; }
+    S.faceSeen = t;
+    return;
+  }
+  if (S.useSpot && S.spot) return;
+  if (S.frameNo % 6 === 0) {
+    dctx.drawImage(src.el, 0, 0, dcv.width, dcv.height);
+    const dx = S.ox / g.aw, dy = S.oy / g.ah;
+    const prior = S.face ? { x: S.face.x + dx, y: S.face.y + dy, w: S.face.w, h: S.face.h } : null;
+    let f = null;
+    try { f = detectBest(dctx.getImageData(0, 0, dcv.width, dcv.height), prior); } catch (e) { f = null; }
+    if (f) {
+      const fs = { x: f.x - dx, y: f.y - dy, w: f.w, h: f.h };   // into steadied coordinates
+      if (S.face && boxIoU(S.face, fs) > 0.3) {
+        // in steadied coordinates the face hardly moves, so aim for the median of recent detections
+        const hist = S.faceHist;
+        hist.push(fs); if (hist.length > 9) hist.shift();
+        const med = k => { const a = hist.map(b => b[k]).sort((p, q) => p - q); return a[a.length >> 1]; };
+        S.faceTarget = { x: med('x'), y: med('y'), w: med('w'), h: med('h') };
+      } else { S.face = fs; S.faceTarget = fs; S.faceHist = [fs]; S.key = null; S.refReset = true; }
+      S.faceSeen = t;
+    } else if (S.face && t - S.faceSeen > 3) { S.face = null; S.faceTarget = null; S.faceHist = []; S.key = null; S.refReset = true; }
+  }
+  if (S.face && S.faceTarget && S.faceHist.length >= 3) {
+    // a moving measurement box adds colour changes of its own, so the box stays put
+    // and only jumps when recent detections agree it is clearly somewhere else
+    const c = S.face, f = S.faceTarget, tol = 0.06 * c.w;
+    if (Math.abs(f.x - c.x) > tol || Math.abs(f.y - c.y) > tol * c.h / c.w || Math.abs(f.w - c.w) > tol) {
+      S.face = { ...f }; S.refReset = true; S.key = null;
+    }
+  }
+}
+
+/* ---------- filters and the pulse reference ---------- */
+// The pulse reference: the measured skin colour, combined across red, green and blue with weights that keep a change
+// in the colour of blood and suppress the kinds of change that noise makes (a matched filter, Capon/MVDR style).
+// What noise looks like is learned from colour changes faster than any heartbeat. When there's no background to
+// cancel lighting with, changes that brighten all three colours alike are suppressed too, as POS does.
+// Positive values mean more blood. Normalised to unit size and clipped, so a jolt can't flash the picture.
+function bqs(xv, z, o, c) {
+  const y1 = c.b0 * xv + z[o]; z[o] = -c.a1 * y1 + z[o + 1]; z[o + 1] = -c.b0 * xv - c.a2 * y1;
+  const y2 = c.b0 * y1 + z[o + 2]; z[o + 2] = -c.a1 * y2 + z[o + 3]; z[o + 3] = -c.b0 * y1 - c.a2 * y2;
+  return y2;
+}
+function refStep(r, g, b) {
+  const R = S.ref, c = S.coef, Q = R.Q;
+  if (R.m === null) R.m = [r, g, b];
+  const aM = 1 - Math.exp(-1 / (FPS * 1.2)), aQ = 1 - Math.exp(-1 / (FPS * 4)), aP = 1 - Math.exp(-1 / (FPS * 4));
+  const m = R.m, x = [r, g, b], n = [0, 0, 0], y = [0, 0, 0], yw = [0, 0, 0], h = [0, 0, 0];
+  for (let k = 0; k < 3; k++) {
+    m[k] += aM * (x[k] - m[k]);
+    n[k] = m[k] > 1 ? x[k] / m[k] - 1 : 0;
+    y[k] = bqs(n[k], R.zb, k * 4, c);
+    yw[k] = bqs(n[k], R.zw, k * 4, COEF_WIDE);
+    const z = R.zh, o = k * 2, H = HP3, hv = H.b0 * n[k] + z[o];
+    z[o] = H.b1 * n[k] - H.a1 * hv + z[o + 1]; z[o + 1] = H.b2 * n[k] - H.a2 * hv;
+    h[k] = hv;
+  }
+  Q[0] += aQ * (h[0] * h[0] - Q[0]); Q[1] += aQ * (h[0] * h[1] - Q[1]); Q[2] += aQ * (h[0] * h[2] - Q[2]);
+  Q[3] += aQ * (h[1] * h[1] - Q[3]); Q[4] += aQ * (h[1] * h[2] - Q[4]); Q[5] += aQ * (h[2] * h[2] - Q[5]);
+  // weights = (noise + loading + lighting penalty)^-1 · blood colour
+  const tr = (Q[0] + Q[3] + Q[5]) / 3 + 1e-14;
+  const gam = S.lightShare >= 0.15 ? 0.3 : S.lightShare <= 0.05 ? 30 : 30 * Math.pow(0.01, (S.lightShare - 0.05) / 0.1);
+  const L = 0.05 * tr, P = gam * tr / 3;
+  const a00 = Q[0] + L + P, a01 = Q[1] + P, a02 = Q[2] + P, a11 = Q[3] + L + P, a12 = Q[4] + P, a22 = Q[5] + L + P;
+  const c00 = a11 * a22 - a12 * a12, c01 = a02 * a12 - a01 * a22, c02 = a01 * a12 - a02 * a11;
+  const c11 = a00 * a22 - a02 * a02, c12 = a01 * a02 - a00 * a12, c22 = a00 * a11 - a01 * a01;
+  const det = a00 * c00 + a01 * c01 + a02 * c02;
+  if (det > 0 && isFinite(det)) {
+    const s0 = PH[0], s1 = PH[1], s2 = PH[2];
+    const w0 = (c00 * s0 + c01 * s1 + c02 * s2) / det, w1 = (c01 * s0 + c11 * s1 + c12 * s2) / det, w2 = (c02 * s0 + c12 * s1 + c22 * s2) / det;
+    const wn = Math.hypot(w0, w1, w2);
+    if (wn > 0) { R.w[0] = w0 / wn; R.w[1] = w1 / wn; R.w[2] = w2 / wn; }
+  }
+  const w = R.w;
+  const p = -(w[0] * y[0] + w[1] * y[1] + w[2] * y[2]);
+  const pw = -(w[0] * yw[0] + w[1] * yw[1] + w[2] * yw[2]);
+  R.vp += aP * (p * p - R.vp);
+  S.pn = R.vp > 1e-14 ? clamp(p / Math.sqrt(R.vp), -2.5, 2.5) : 0;
+  // the wide-band version feeds the heart-rate search, so locking onto a rate never hides a different one
+  const hb = S.hrBuf;
+  hb.v[hb.head] = pw; hb.head = (hb.head + 1) % hb.v.length; hb.n = Math.min(hb.v.length, hb.n + 1);
+  return S.pn;
+}
+function stepFilters(t, roi, g) {
+  const { b0, a1, a2 } = S.coef, x = S.cells, filt = S.filt, prev = S.prev, n = g.n;
+  const z0 = S.z[0], z1 = S.z[1], z2 = S.z[2], z3 = S.z[3], Syp = S.Syp, Syy = S.Syy, R = S.ref;
+  if (S.needInit) {
+    // start each filter in its resting state for the current picture, so nothing flashes
+    for (let i = 0; i < n; i++) { z0[i] = -b0 * x[i]; z1[i] = -b0 * x[i]; z2[i] = 0; z3[i] = 0; filt[i] = 0; }
+    prev.set(x); S.prevT = t; S.gridT = t;
+    R.zb.fill(0);
+    S.needInit = false;
+    S.rampStart = t;
+  }
+  if (S.refReset && roi) {
+    // the measured area moved: start its colour afresh, but keep what was learned about noise
+    R.m = roi.slice(); R.zb.fill(0); R.zw.fill(0); R.zh.fill(0);
+    S.prevRoi = roi.slice(); S.refReset = false;
+  }
+  const STEP = 1 / FPS, span = t - S.prevT, pr = S.prevRoi;
+  const aB = 1 - Math.exp(-STEP / BETA_TAU);
+  const tr = S.tr;
+  while (S.gridT + STEP <= t + 1e-6) {
+    S.gridT += STEP;
+    const w = span > 1e-6 ? clamp((S.gridT - S.prevT) / span, 0, 1) : 1;
+    const pn = roi && pr ? refStep(pr[0] + w * (roi[0] - pr[0]), pr[1] + w * (roi[1] - pr[1]), pr[2] + w * (roi[2] - pr[2])) : S.pn;
+    for (let i = 0; i < n; i++) {
+      const xi = prev[i] + w * (x[i] - prev[i]);
+      const y1 = b0 * xi + z0[i]; z0[i] = -a1 * y1 + z1[i]; z1[i] = -b0 * xi - a2 * y1;
+      const y2 = b0 * y1 + z2[i]; z2[i] = -a1 * y2 + z3[i]; z3[i] = -b0 * y1 - a2 * y2;
+      filt[i] = y2;
+      // how much of this cell's colour change follows the pulse reference
+      const y = y2 / (xi > 4 ? xi : 4);
+      Syp[i] += aB * (y * pn - Syp[i]); Syy[i] += aB * (y * y - Syy[i]);
+    }
+    S.Spp += aB * (pn * pn - S.Spp);
+    tr.t[tr.head] = S.gridT; tr.v[tr.head] = pn;
+    tr.head = (tr.head + 1) % TRACE_CAP; tr.n = Math.min(TRACE_CAP, tr.n + 1);
+  }
+  prev.set(x); S.prevT = t;
+  if (roi) S.prevRoi = roi.slice();
+}
+
+/* ---------- turning signals into a picture change ---------- */
+// Clean: each area shows only the part of its colour change that follows the pulse reference, in the colour of blood.
+// The pulse varies smoothly across skin while noise doesn't, so the statistics are pooled over neighbouring cells.
+// The bar for "follows the pulse" is set by how well areas away from the face follow it by chance.
+function renderClean(g, k) {
+  const { gw, gh } = g, nc = gw * gh, Syp = S.Syp, Syy = S.Syy, Spp = S.Spp, x = S.cells, d = S.delta, gate = S.gate, A = S.ampA;
+  const P = S.pool, T = S.poolT, R2 = S.r2;
+  for (let c = 0, o = 0; c < nc; c++, o += 3) {
+    P[c] = Syp[o]; P[nc + c] = Syp[o + 1]; P[2 * nc + c] = Syp[o + 2]; P[3 * nc + c] = Syy[o] + Syy[o + 1] + Syy[o + 2];
+  }
+  for (let q = 0; q < 4; q++) {
+    const a = P.subarray(q * nc, (q + 1) * nc);
+    for (let pass = 0; pass < 3; pass++) blurPlane(a, T, gw, gh);
+  }
+  const ok = Spp > 1e-6;
+  for (let c = 0; c < nc; c++) {
+    if (!ok) { R2[c] = 0; A[c] = 0; continue; }
+    const br = P[c] / Spp, bg = P[nc + c] / Spp, bb = P[2 * nc + c] / Spp, tot = P[3 * nc + c];
+    R2[c] = tot > 0 ? (br * br + bg * bg + bb * bb) * Spp / tot : 0;
+    A[c] = -(br * PH[0] + bg * PH[1] + bb * PH[2]);
+  }
+  // chance level, from cells that are neither skin nor near the face
+  const bgv = S.bgR2;
+  let nb = 0;
+  for (let c = 0; c < nc; c++) if (S.skinW[c] < 0.15 && S.nearW[c] < 0.05) bgv[nb++] = R2[c];
+  if (ok && nb >= 0.1 * nc) {
+    const v = bgv.subarray(0, nb).sort();
+    S.chance += 0.05 * (v[nb >> 1] - S.chance);
+  }
+  // the bar sits a few times above chance, within limits: a background that itself follows the pulse a little
+  // (cameras adjust the whole picture as your face changes colour) mustn't raise it out of reach
+  const st = S.strict, bar = clamp((1.2 + 0.035 * st) * S.chance, 0.03 + 0.001 * st, 0.08 + 0.002 * st);
+  const lo = 0.5 * bar, hi = 1.5 * bar;
+  S.r2lo = lo; S.r2hi = hi;
+  for (let c = 0; c < nc; c++) {
+    let gv = 0;
+    const a = A[c];
+    if (ok && a > 0) {
+      // blood darkens green much more than red: a change that is the same in all colours is lighting, not pulse
+      const br = P[c] / Spp, bg = P[nc + c] / Spp, bb = P[2 * nc + c] / Spp;
+      const mu = (br + bg + bb) / 3, cr = br - mu, cg = bg - mu, cb = bb - mu;
+      const cn = Math.sqrt(cr * cr + cg * cg + cb * cb), bn = Math.sqrt(br * br + bg * bg + bb * bb);
+      const cosC = cn > 0 ? -(cr * PC[0] + cg * PC[1] + cb * PC[2]) / cn : 0;
+      gv = smooth(lo, hi, R2[c]) * smooth(0.0, 0.45, cosC) * smooth(0.02, 0.07, bn > 0 ? cn / bn : 0);
+    }
+    gate[c] = gv;
+  }
+  blurPlane(gate, T, gw, gh);
+  // the fit underestimates the pulse by however much noise the reference carries; 1.5 restores about what a clean
+  // recording shows, so the Exaggerate setting means much the same in both methods
+  const pn = S.pn, kk = 1.5 * k;
+  let gs = 0, ws = 0;
+  for (let c = 0, j = 0, o = 0; c < nc; c++, j += 4, o += 3) {
+    const rel = -A[c] * gate[c] * pn * kk;
+    d[j] = 128 + clamp(Math.round(rel * PH[0] * x[o]), -CLAMP, CLAMP);
+    d[j + 1] = 128 + clamp(Math.round(rel * PH[1] * x[o + 1]), -CLAMP, CLAMP);
+    d[j + 2] = 128 + clamp(Math.round(rel * PH[2] * x[o + 2]), -CLAMP, CLAMP);
+    gs += gate[c] * S.regionW[c]; ws += S.regionW[c];
+  }
+  S.cleanCover = ws > 0 ? gs / ws : 0;
+}
+// Raw: classic Eulerian magnification of everything in the band, with optional lighting cancellation and noise floor.
+function renderRaw(g, k) {
+  const nc = g.gw * g.gh, x = S.cells, out = S.out, d = S.delta, skin = S.skinW, near = S.nearW;
+  out.set(S.filt);
+  let bgG = 0;
+  {
+    let s0 = 0, s1 = 0, s2 = 0, x0 = 0, x1 = 0, x2 = 0, cnt = 0;
+    const has = !!activeBox();
+    for (let c = 0, o = 0; c < nc; c++, o += 3) {
+      if (has ? near[c] < 0.1 : skin[c] < 0.1) { s0 += out[o]; s1 += out[o + 1]; s2 += out[o + 2]; x0 += x[o]; x1 += x[o + 1]; x2 += x[o + 2]; cnt++; }
+    }
+    S.bgShare = cnt / nc;
+    if (cnt >= 0.08 * nc && x0 > cnt && x1 > cnt && x2 > cnt) {
+      bgG = x1 / cnt;
+      if (S.cancel) {
+        const r0 = s0 / x0, r1 = s1 / x1, r2 = s2 / x2;
+        for (let c = 0, o = 0; c < nc; c++, o += 3) { out[o] -= r0 * x[o]; out[o + 1] -= r1 * x[o + 1]; out[o + 2] -= r2 * x[o + 2]; }
+      }
+    } else if (S.cancel) {
+      // no background to compare with: remove changes that brighten or darken all three colours by the same share
+      for (let c = 0, o = 0; c < nc; c++, o += 3) {
+        if (x[o] < 4 || x[o + 1] < 4 || x[o + 2] < 4) continue;
+        const rr = out[o] / x[o], rg = out[o + 1] / x[o + 1], rb = out[o + 2] / x[o + 2], mu = (rr + rg + rb) / 3;
+        out[o] = (rr - mu) * x[o]; out[o + 1] = (rg - mu) * x[o + 1]; out[o + 2] = (rb - mu) * x[o + 2];
+      }
+    }
+  }
+  const th = S.floor * FLOOR_LEVELS;
+  for (let c = 0, j = 0, o = 0; c < nc; c++, j += 4, o += 3) {
+    let r = out[o], gg = out[o + 1], b = out[o + 2];
+    if (th > 0) {
+      // noise floor: a soft gate that hides changes well under th and leaves changes well over it intact
+      const q = (r * r + gg * gg + b * b) / (th * th), s = q * q / (1 + q * q);
+      r *= s; gg *= s; b *= s;
+    }
+    d[j] = 128 + clamp(Math.round(r * k), -CLAMP, CLAMP);
+    d[j + 1] = 128 + clamp(Math.round(gg * k), -CLAMP, CLAMP);
+    d[j + 2] = 128 + clamp(Math.round(b * k), -CLAMP, CLAMP);
+  }
+  return bgG;
+}
+
 function resetSignal(t) {
-  S.needInit = true;
+  S.needInit = true; S.refReset = true; S.cmFresh = true;
   const H = S.hr;
-  H.t = []; H.c = []; H.ests = []; H.last = -1e9; H.bpm = null; H.lastConf = t; H.state = 'measuring'; H.span = 0;
+  H.ests = []; H.last = -1e9; H.bpm = null; H.lastConf = t; H.state = 'measuring'; H.span = 0;
+  S.hrBuf.n = 0; S.hrBuf.head = 0; S.ref.zw.fill(0);
   if (H.lockBpm !== null) { H.lockBpm = null; setBand(WIDE[0], WIDE[1]); }
-  S.tr.n = 0; S.trInit = true;
+  S.tr.n = 0;
   updateReadout();
 }
 
@@ -1078,161 +1548,78 @@ function onFrame(t) {
   const t0 = performance.now();
   if (!S.grid || S.grid.sw !== w || S.grid.sh !== h) setupGrid(w, h);
   const g = S.grid;
+  if (S.firstT === null) S.firstT = t;
 
   // timing: a long gap or a jump back restarts the filters
+  S.lastFrameDt = 1 / 30;
   if (S.lastT !== null) {
     const dt = t - S.lastT;
     if (dt > 0.6 || dt < -0.05) resetSignal(t);
+    else S.lastFrameDt = dt;
   }
   S.lastT = t;
   if (!S.coef) setBand(S.band[0], S.band[1]);
 
-  // read a small copy of the frame
-  actx.drawImage(src.el, 0, 0, acv.width, acv.height);
-  const px = actx.getImageData(0, 0, acv.width, acv.height).data;
-  blockAverage(px, g, S.cells);
+  // read a small copy of the frame and steady it
+  actx.drawImage(src.el, 0, 0, g.aw, g.ah);
+  const px = actx.getImageData(0, 0, g.aw, g.ah).data;
+  makeGray(px, g);
+  track(g, t);
+  updateFace(src, g, t);
 
-  // skin colour for the pulse readout
+  // masks, and the skin colour of the measured area
+  updatePixelMask(px, g);
   const acc = [0, 0, 0, 0];
-  for (const r of roiRects()) rectMean(px, acv.width, acv.height, r, acc);
+  for (const r of roiRects()) rectMean(px, g.aw, g.ah, toPicture(r, g), acc, S.pskin);
+  if (acc[3] < 2) { acc.fill(0); for (const r of roiRects()) rectMean(px, g.aw, g.ah, toPicture(r, g), acc, null); }
   const roi = acc[3] > 0 ? [acc[0] / acc[3], acc[1] / acc[3], acc[2] / acc[3]] : null;
+  if (roi && activeBox()) updateSkinRef(roi);
 
-  // temporal band-pass on every cell and channel, stepped on a fixed 30 Hz clock.
-  // Frames are interpolated onto that clock, so dropped or uneven frames can't upset the filters.
+  // steadied grid, filtered on a fixed clock
+  stabCells(px, g, S.cells);
   blur(S.cells, S.tmp, g);
-  const { b0, a1, a2 } = S.coef, x = S.cells, filt = S.filt, prev = S.prev, out = S.out, n = g.n;
-  const z0 = S.z[0], z1 = S.z[1], z2 = S.z[2], z3 = S.z[3];
-  const tr = S.tr, STEP = 1 / FPS;
-  if (S.needInit) {
-    // start each filter in its resting state for the current picture, so nothing flashes
-    for (let i = 0; i < n; i++) { z0[i] = -b0 * x[i]; z1[i] = -b0 * x[i]; z2[i] = 0; z3[i] = 0; filt[i] = 0; }
-    prev.set(x); S.prevT = t; S.gridT = t;
-    S.needInit = false;
-    S.rampStart = t;
-  }
-  const span = t - S.prevT;
-  while (S.gridT + STEP <= t + 1e-6) {
-    S.gridT += STEP;
-    const w = span > 1e-6 ? clamp((S.gridT - S.prevT) / span, 0, 1) : 1;
-    for (let i = 0; i < n; i++) {
-      const xi = prev[i] + w * (x[i] - prev[i]);
-      const y1 = b0 * xi + z0[i]; z0[i] = -a1 * y1 + z1[i]; z1[i] = -b0 * xi - a2 * y1;
-      const y2 = b0 * y1 + z2[i]; z2[i] = -a1 * y2 + z3[i]; z3[i] = -b0 * y1 - a2 * y2;
-      filt[i] = y2;
-    }
-  }
-  prev.set(x); S.prevT = t;
-  out.set(filt);
-
-  // where to exaggerate: skin tone learned from the tracked face, and the face itself
-  const nc = g.gw * g.gh;
-  if (roi && S.face) updateSkinRef(roi);
-  updateMask(g, x);
-  const mask = S.mask, skin = S.skinW, near = S.nearW;
-
-  // cancel lighting flicker: the relative change the background shares is lighting, not pulse.
-  // Background means away from the face when one is tracked (even a skin-coloured wall), otherwise non-skin.
-  let bgG = 0;
+  updateCellWeights(g, S.cells);
+  lightingChange(g, S.lastFrameDt);
   {
-    let s0 = 0, s1 = 0, s2 = 0, x0 = 0, x1 = 0, x2 = 0, cnt = 0;
-    const hasFace = !!S.face;
-    for (let c = 0, o = 0; c < nc; c++, o += 3) {
-      if (hasFace ? near[c] < 0.1 : skin[c] < 0.1) { s0 += out[o]; s1 += out[o + 1]; s2 += out[o + 2]; x0 += x[o]; x1 += x[o + 1]; x2 += x[o + 2]; cnt++; }
-    }
-    S.bgShare = cnt / nc;
-    if (cnt >= 0.08 * nc && x0 > cnt && x1 > cnt && x2 > cnt) {
-      bgG = x1 / cnt;
-      if (S.cancel) {
-        const r0 = s0 / x0, r1 = s1 / x1, r2 = s2 / x2;
-        for (let c = 0, o = 0; c < nc; c++, o += 3) { out[o] -= r0 * x[o]; out[o + 1] -= r1 * x[o + 1]; out[o + 2] -= r2 * x[o + 2]; }
-      }
-    } else if (S.cancel) {
-      // no background to compare with (the face fills the picture): remove changes that brighten or darken
-      // all three colours by the same share, which is what exposure and white light do, and keep the colour shift
-      for (let c = 0, o = 0; c < nc; c++, o += 3) {
-        if (x[o] < 4 || x[o + 1] < 4 || x[o + 2] < 4) continue;
-        const rr = out[o] / x[o], rg = out[o + 1] / x[o + 1], rb = out[o + 2] / x[o + 2], mu = (rr + rg + rb) / 3;
-        out[o] = (rr - mu) * x[o]; out[o + 1] = (rg - mu) * x[o + 1]; out[o + 2] = (rb - mu) * x[o + 2];
-      }
-    }
+    // take out the change the background shares, so lighting can't pass for a pulse:
+    // always for the pulse reference and heart rate, and for the picture in the clean method
+    const L = S.light, q0 = 1 / (1 + L[0]), q1 = 1 / (1 + L[1]), q2 = 1 / (1 + L[2]);
+    if (roi) { roi[0] *= q0; roi[1] *= q1; roi[2] *= q2; }
+    if (S.method === 0) { const x = S.cells; for (let o = 0; o < x.length; o += 3) { x[o] *= q0; x[o + 1] *= q1; x[o + 2] *= q2; } }
   }
+  S.lastRoi = roi;
+  stepFilters(t, roi, g);
 
   // motion guard, judged where the effect is shown: fast to damp, slow to recover
+  const nc = g.gw * g.gh, filt = S.filt;
   let wsum = 0, msum = 0;
   for (let c = 0, o = 0; c < nc; c++, o += 3) {
-    const w = 0.05 + mask[c];
-    wsum += w;
-    msum += w * (Math.abs(out[o]) + Math.abs(out[o + 1]) + Math.abs(out[o + 2])) / 3;
+    const wt = 0.05 + S.regionW[c];
+    wsum += wt;
+    msum += wt * (Math.abs(filt[o]) + Math.abs(filt[o + 1]) + Math.abs(filt[o + 2])) / 3;
   }
   const m = msum / wsum;
-  const target = m > GUARD ? GUARD / m : 1;
+  let target = m > GUARD ? GUARD / m : 1;
+  if (S.lkErr > 0.35) target = Math.min(target, clamp(1 - (S.lkErr - 0.35) / 0.3, 0, 1));
   S.guard = target < S.guard ? target : S.guard + (target - S.guard) * 0.04;
   const ramp = clamp((t - S.rampStart) / 1.5, 0, 1);
   const k = S.amp * S.guard * ramp;
-  const th = S.floor * FLOOR_LEVELS;
-  const d = S.delta;
-  for (let c = 0, j = 0, o = 0; c < nc; c++, j += 4, o += 3) {
-    let r = out[o], gg = out[o + 1], b = out[o + 2];
-    if (th > 0) {
-      // noise floor: a soft gate that hides changes well under th and leaves changes well over it intact
-      const q = (r * r + gg * gg + b * b) / (th * th), s = q * q / (1 + q * q);
-      r *= s; gg *= s; b *= s;
-    }
-    const kc = k * mask[c];
-    d[j] = 128 + clamp(Math.round(r * kc), -CLAMP, CLAMP);
-    d[j + 1] = 128 + clamp(Math.round(gg * kc), -CLAMP, CLAMP);
-    d[j + 2] = 128 + clamp(Math.round(b * kc), -CLAMP, CLAMP);
-  }
+  let bgG = 0;
+  if (S.method === 0) renderClean(g, k); else bgG = renderRaw(g, k);
 
-  // live trace: inverted green of the skin through a fixed 45–150 bpm band-pass, so it never restarts on a lock
-  if (roi) {
-    let G = roi[1];
-    if (bgG > 0) {
-      S.bgRef = S.bgRef === null ? bgG : S.bgRef + 0.01 * (bgG - S.bgRef);
-      if (S.cancel) G *= S.bgRef / bgG;
-    }
-    const c = S.trCoef || (S.trCoef = design(FPS, WIDE[0], WIDE[1]));
-    if (S.trInit) { tr.z = [-c.b0 * G, -c.b0 * G, 0, 0]; S.trPrevG = G; S.trPrevT = t; S.trGridT = t; S.trInit = false; }
-    const sp = t - S.trPrevT;
-    while (S.trGridT + STEP <= t + 1e-6) {
-      S.trGridT += STEP;
-      const w = sp > 1e-6 ? clamp((S.trGridT - S.trPrevT) / sp, 0, 1) : 1;
-      const Gi = S.trPrevG + w * (G - S.trPrevG);
-      const y1 = c.b0 * Gi + tr.z[0]; tr.z[0] = -c.a1 * y1 + tr.z[1]; tr.z[1] = -c.b0 * Gi - c.a2 * y1;
-      const y2 = c.b0 * y1 + tr.z[2]; tr.z[2] = -c.a1 * y2 + tr.z[3]; tr.z[3] = -c.b0 * y1 - c.a2 * y2;
-      tr.t[tr.head] = S.trGridT; tr.v[tr.head] = -y2 / Math.max(1, Gi);
-      tr.head = (tr.head + 1) % TRACE_CAP; tr.n = Math.min(TRACE_CAP, tr.n + 1);
-    }
-    S.trPrevG = G; S.trPrevT = t;
-    const H = S.hr;
-    H.t.push(t); H.c.push(roi[0], roi[1], roi[2]);
-    while (H.t.length && t - H.t[0] > 14) { H.t.shift(); H.c.splice(0, 3); }
-  }
-
-  // face tracking (the demo face stays where it is)
-  if (src.faceHint) S.face = src.faceHint;
-  else if (S.frameNo % 8 === 0) {
-    dctx.drawImage(src.el, 0, 0, dcv.width, dcv.height);
-    let f = null;
-    try { f = detectFace(dctx.getImageData(0, 0, dcv.width, dcv.height)); } catch (e) { f = null; }
-    if (f) {
-      if (S.face && boxIoU(S.face, f) > 0.2) {
-        const q = 0.35, c = S.face;
-        S.face = { x: c.x + q * (f.x - c.x), y: c.y + q * (f.y - c.y), w: c.w + q * (f.w - c.w), h: c.h + q * (f.h - c.h) };
-      } else S.face = f;
-      S.faceSeen = t;
-    } else if (S.face && t - S.faceSeen > 2) S.face = null;
-  }
-
-  S.renderer.draw(src.el, d, g.gw, g.gh, S.mode, src.mirror);
-  drawOverlay(src.mirror);
+  S.renderer.draw(src.el, S.delta, g.gw, g.gh, S.pmask8, g.aw, g.ah, S.mode, src.mirror, S.ox / g.aw, S.oy / g.ah);
+  drawOverlay(src.mirror, g);
   drawWave(t);
+
   estimateHR(t);
 
-  // hold-still hint
+  // hints on the picture
   if (S.guard < 0.45) { if (S.stillSince === null) S.stillSince = t; }
   else S.stillSince = null;
-  els.stillChip.hidden = !(S.stillSince !== null && t - S.stillSince > 0.3);
+  const still = S.stillSince !== null && t - S.stillSince > 0.3;
+  els.stillChip.hidden = !still;
+  const finding = !still && S.method === 0 && S.amp > 0 && S.mode !== 2 && S.cleanCover < 0.05 && S.hr.state !== 'locked' && t - S.firstT > 3;
+  els.hintChip.hidden = !finding;
 
   S.frameNo++;
   const st = S.stats;
@@ -1247,36 +1634,25 @@ function onFrame(t) {
 
 /* ================= heart rate ================= */
 function estimateHR(t) {
-  const H = S.hr;
+  const H = S.hr, hb = S.hrBuf;
   if (t - H.last < 0.5) return;
   H.last = t;
-  const T = H.t;
-  H.span = T.length > 1 ? T[T.length - 1] - T[0] : 0;
+  H.span = hb.n / FPS;
   if (H.span < 6) {
     if (H.lockBpm === null) H.state = 'measuring';
     updateReadout();
     return;
   }
-  const win = Math.min(H.span, 12), tEnd = T[T.length - 1], tStart = tEnd - win;
-  const N = Math.floor(win * FPS);
-  const R = new Float64Array(N), G = new Float64Array(N), B = new Float64Array(N);
-  let j = 0;
-  for (let i = 0; i < N; i++) {
-    const tt = tStart + i / FPS;
-    while (j < T.length - 2 && T[j + 1] <= tt) j++;
-    const ta = T[j], tb = T[Math.min(j + 1, T.length - 1)];
-    const w = tb > ta ? clamp((tt - ta) / (tb - ta), 0, 1) : 0;
-    const a = j * 3, b = Math.min(j + 1, T.length - 1) * 3;
-    R[i] = H.c[a] * (1 - w) + H.c[b] * w;
-    G[i] = H.c[a + 1] * (1 - w) + H.c[b + 1] * w;
-    B[i] = H.c[a + 2] * (1 - w) + H.c[b + 2] * w;
-  }
-  const h = posSignal(R, G, B, FPS);
+  // the last 12 s of the wide-band pulse reference (skipping its first second, while the filters settle)
+  const N = Math.min(hb.n - FPS, 12 * FPS), L = hb.v.length;
+  if (N < 5 * FPS) { updateReadout(); return; }
+  const h = new Float64Array(N);
+  for (let i = 0; i < N; i++) h[i] = hb.v[(hb.head - N + i + L) % L];
   const sp = powerSpectrum(h, FPS, 2048), pk = findPeak(sp), q = snrAt(sp, pk.f);
   const hw = templateHW(N), frac0 = Math.min(0.9, 6 * hw / (BAND_HI - BAND_LO));
   const excess = q.snr - 10 * Math.log10(frac0 / (1 - frac0));
   const bpm = pk.f * 60;
-  H.ests.push({ bpm, ok: excess >= 5.5 && bpm >= 42 && bpm <= 170 });
+  H.ests.push({ bpm, excess, ok: excess >= 5 && bpm >= 44 && bpm <= 170 });
   if (H.ests.length > 4) H.ests.shift();
   const last2 = H.ests.slice(-2);
   if (last2.length === 2 && last2[0].ok && last2[1].ok && Math.abs(last2[0].bpm - last2[1].bpm) <= 6) {
@@ -1313,36 +1689,47 @@ function updateReadout() {
   updateRegionHelp();
 }
 function updateRegionHelp() {
-  const face = !!S.face;
+  const spot = S.useSpot && !!S.spot, face = !!S.face;
   els.regionHelp.textContent = [
-    'The whole picture is exaggerated, background included.',
-    face ? 'Only areas that match your skin tone change, including your neck and hands.' : 'Only areas in the usual range of skin tones change. Once a face is found, it matches your skin exactly.',
-    face ? 'Only skin inside the tracked face changes.' : 'No face found yet, so all skin-coloured areas change for now.'
+    S.method === 0 ? 'Every area that follows your heartbeat changes, wherever it is.' : 'The whole picture is exaggerated, background included.',
+    spot || face ? 'Only areas that match the measured skin tone change, including your neck and hands.' : 'Only areas in the usual range of skin tones change. Once a face is found, it matches your skin exactly.',
+    spot ? 'Only skin inside the tapped spot changes.' : face ? 'Only skin inside the tracked face changes.' : 'No face found yet, so all skin-coloured areas change for now.'
   ][S.region];
 }
 
 /* ================= drawing ================= */
-function drawOverlay(mirror) {
+function drawOverlay(mirror, g) {
   const W = els.overlay.width, H = els.overlay.height;
   octx.clearRect(0, 0, W, H);
-  const s = W / 480, col = colors().onStage;
+  const s = W / 480, col = colors().onStage, f = activeBox();
+  const dx = g ? S.ox / g.aw : 0, dy = g ? S.oy / g.ah : 0;
   octx.save();
   octx.strokeStyle = col;
   octx.lineCap = 'round';
-  const rects = S.face ? [S.face] : null;
-  if (rects) {
-    const f = S.face;
-    const x = (mirror ? 1 - f.x - f.w : f.x) * W, y = f.y * H, w = f.w * W, h = f.h * H, L = Math.min(w, h) * 0.18;
-    octx.globalAlpha = 0.85; octx.lineWidth = Math.max(1.5, 2.2 * s);
-    octx.beginPath();
-    octx.moveTo(x, y + L); octx.lineTo(x, y); octx.lineTo(x + L, y);
-    octx.moveTo(x + w - L, y); octx.lineTo(x + w, y); octx.lineTo(x + w, y + L);
-    octx.moveTo(x + w, y + h - L); octx.lineTo(x + w, y + h); octx.lineTo(x + w - L, y + h);
-    octx.moveTo(x + L, y + h); octx.lineTo(x, y + h); octx.lineTo(x, y + h - L);
-    octx.stroke();
+  if (f) {
+    const bx = f.x + dx, by = f.y + dy;
+    const x = (mirror ? 1 - bx - f.w : bx) * W, y = by * H, w = f.w * W, h = f.h * H;
+    if (S.useSpot && S.spot) {
+      octx.globalAlpha = 0.9; octx.lineWidth = Math.max(1.5, 2 * s);
+      octx.setLineDash([6 * s, 5 * s]);
+      octx.beginPath(); octx.ellipse(x + w / 2, y + h / 2, w / 2, h / 2, 0, 0, Math.PI * 2); octx.stroke();
+      octx.setLineDash([]);
+      const c = 6 * s;
+      octx.beginPath(); octx.moveTo(x + w / 2 - c, y + h / 2); octx.lineTo(x + w / 2 + c, y + h / 2);
+      octx.moveTo(x + w / 2, y + h / 2 - c); octx.lineTo(x + w / 2, y + h / 2 + c); octx.stroke();
+    } else {
+      const L = Math.min(w, h) * 0.18;
+      octx.globalAlpha = 0.85; octx.lineWidth = Math.max(1.5, 2.2 * s);
+      octx.beginPath();
+      octx.moveTo(x, y + L); octx.lineTo(x, y); octx.lineTo(x + L, y);
+      octx.moveTo(x + w - L, y); octx.lineTo(x + w, y); octx.lineTo(x + w, y + L);
+      octx.moveTo(x + w, y + h - L); octx.lineTo(x + w, y + h); octx.lineTo(x + w - L, y + h);
+      octx.moveTo(x + L, y + h); octx.lineTo(x, y + h); octx.lineTo(x, y + h - L);
+      octx.stroke();
+    }
   } else {
     const r = roiRects()[0];
-    const x = (mirror ? 1 - r.x1 : r.x0) * W, y = r.y0 * H, w = (r.x1 - r.x0) * W, h = (r.y1 - r.y0) * H;
+    const x = (mirror ? 1 - r.x1 - dx : r.x0 + dx) * W, y = (r.y0 + dy) * H, w = (r.x1 - r.x0) * W, h = (r.y1 - r.y0) * H;
     octx.globalAlpha = 0.55; octx.lineWidth = Math.max(1, 1.5 * s);
     octx.setLineDash([4 * s, 5 * s]);
     octx.strokeRect(x, y, w, h);
@@ -1358,7 +1745,7 @@ function drawWave(tNow) {
   wctx.beginPath(); wctx.moveTo(0, H / 2); wctx.lineTo(W, H / 2); wctx.stroke();
   const tr = S.tr, span = 6, pad = 6 * dpr;
   if (tr.n < 2) return;
-  // scale to the visible window, ignoring the first second while the filter settles
+  // scale to the visible window, ignoring the first second while the filters settle
   let peak = 0;
   for (let k = Math.min(tr.n, 30); k < tr.n; k++) {
     const i = (tr.head - tr.n + k + TRACE_CAP) % TRACE_CAP;
@@ -1384,11 +1771,14 @@ function drawWave(tNow) {
 function setSource(src) {
   S.token++;
   S.src = src;
-  S.grid = null; S.lastT = null; S.coef = null; S.guard = 1; S.frameNo = 0; S.stillSince = null;
+  S.grid = null; S.lastT = null; S.firstT = null; S.coef = null; S.guard = 1; S.frameNo = 0; S.stillSince = null;
   S.band = WIDE.slice();
-  S.face = src.faceHint || null;
-  S.skinRef = null; S.bgRef = null; S.maskFresh = true;
+  S.face = null; S.faceTarget = null; S.faceHist = []; S.spot = null; S.useSpot = false; S.ox = 0; S.oy = 0; S.key = null; S.lkErr = 0;
+  S.skinRef = null; S.bgRef = null; S.pn = 0; S.Spp = 0; S.cleanCover = 0;
+  Object.assign(S.ref, { m: null, vp: 0, w: [0, 1, 0] }); S.ref.zb.fill(0); S.ref.zw.fill(0); S.ref.zh.fill(0); S.ref.Q.fill(0);
+  S.light = [0, 0, 0]; S.lightShare = 0; S.chance = 0.04;
   S.hr.lockBpm = null;
+  updateSpotUI();
   resetSignal(0);
   els.srcTag.textContent = src.label;
   els.liveDot.hidden = src.kind !== 'camera';
@@ -1592,11 +1982,68 @@ function setWidth(wi) {
   updateReadout();
   save('width', wi);
 }
+function setMethod(m) {
+  if (S.method !== m) S.needInit = true;   // the clean method feeds the filters lighting-corrected colour: restart them at rest
+  S.method = m;
+  for (const b of els.methodSeg.querySelectorAll('button')) b.setAttribute('aria-pressed', String(+b.dataset.method === m));
+  els.methodHelp.textContent = m === 0
+    ? 'Shows only colour changes that rise and fall with your heartbeat, in the colour of blood. Noise, lighting changes and movement are left out.'
+    : 'Plain Eulerian magnification: every colour change at heart-rate speed is exaggerated, including noise and lighting changes.';
+  els.strictRow.hidden = m !== 0;
+  els.floorRow.hidden = m !== 1;
+  els.cancelRow.hidden = m !== 1;
+  updateRegionHelp();
+  save('method', m);
+}
+function setStrict(v) {
+  S.strict = v;
+  els.strict.value = String(v);
+  els.strictOut.textContent = v < 20 ? 'relaxed' : v < 50 ? 'balanced' : v < 75 ? 'strict' : 'very strict';
+  save('strict', v);
+}
+function setStab(on) {
+  S.stab = on;
+  els.stabChk.checked = on;
+  save('stab', on ? 1 : 0);
+}
+function updateSpotUI() {
+  if (!els.spotSeg) return;
+  for (const b of els.spotSeg.querySelectorAll('button')) b.setAttribute('aria-pressed', String((+b.dataset.spot === 1) === S.useSpot));
+  els.spotSeg.querySelector('[data-spot="1"]').disabled = !S.spot;
+  updateRegionHelp();
+}
+function setSpot(use) {
+  if (use && !S.spot) return;
+  S.useSpot = use;
+  S.key = null; S.refReset = true; S.pmaskFresh = true;
+  if (S.lastT !== null) resetSignal(S.lastT);
+  updateSpotUI();
+}
+// Tap the picture to measure that spot (for example a palm or wrist) instead of the face.
+els.stage.addEventListener('click', e => {
+  const g = S.grid;
+  if (!S.src || !g) return;
+  const r = els.stage.getBoundingClientRect();
+  let u = (e.clientX - r.left) / r.width, v = (e.clientY - r.top) / r.height;
+  if (S.src.mirror) u = 1 - u;
+  const [w, h] = srcSize(S.src), side = 0.24 * Math.min(w, h), bw = side / w, bh = side / h;
+  const x = clamp(u - bw / 2, 0, 1 - bw), y = clamp(v - bh / 2, 0, 1 - bh);
+  S.spot = { x: x - S.ox / g.aw, y: y - S.oy / g.ah, w: bw, h: bh };   // steadied coordinates
+  S.skinRef = null;
+  setSpot(true);
+});
+els.methodSeg.addEventListener('click', e => { const b = e.target.closest('button'); if (b) setMethod(+b.dataset.method); });
+els.spotSeg.addEventListener('click', e => { const b = e.target.closest('button'); if (b && !b.disabled) { if (+b.dataset.spot === 0) S.skinRef = null; setSpot(+b.dataset.spot === 1); } });
+els.stabChk.addEventListener('change', () => setStab(els.stabChk.checked));
+els.strict.addEventListener('input', () => setStrict(+els.strict.value));
 els.regionSeg.addEventListener('click', e => { const b = e.target.closest('button'); if (b) setRegion(+b.dataset.region); });
 els.widthSeg.addEventListener('click', e => { const b = e.target.closest('button'); if (b) setWidth(+b.dataset.width); });
 els.cancelChk.addEventListener('change', () => setCancel(els.cancelChk.checked));
 els.floor.addEventListener('input', () => setFloor(+els.floor.value));
-els.resetTune.addEventListener('click', () => { setRegion(DEFAULTS.region); setCancel(DEFAULTS.cancel); setFloor(DEFAULTS.floor); setWidth(DEFAULTS.width); });
+els.resetTune.addEventListener('click', () => {
+  setMethod(DEFAULTS.method); setRegion(DEFAULTS.region); setCancel(DEFAULTS.cancel); setFloor(DEFAULTS.floor);
+  setWidth(DEFAULTS.width); setStrict(DEFAULTS.strict); setStab(DEFAULTS.stab); setSpot(false);
+});
 els.amp.addEventListener('input', () => setAmp(+els.amp.value));
 els.modeSeg.addEventListener('click', e => { const b = e.target.closest('button'); if (b) setMode(+b.dataset.mode); });
 els.camBtn.addEventListener('click', () => { if (S.src && S.src.kind === 'camera') startDemo(); else startCamera(); });
@@ -1620,6 +2067,9 @@ setAmp(savedAmp);
 setMode(savedMode);
 {
   const read = (k, ok, d) => { try { const v = localStorage.getItem('pulseMirror.' + k); return v !== null && ok(+v) ? +v : d; } catch (e) { return d; } };
+  setMethod(read('method', v => v === 0 || v === 1, DEFAULTS.method));
+  setStrict(read('strict', v => v >= 0 && v <= 100 && v % 5 === 0, DEFAULTS.strict));
+  setStab(!!read('stab', v => v === 0 || v === 1, DEFAULTS.stab ? 1 : 0));
   setRegion(read('region', v => [0, 1, 2].includes(v), DEFAULTS.region));
   setCancel(!!read('cancel', v => v === 0 || v === 1, DEFAULTS.cancel ? 1 : 0));
   setFloor(read('floor', v => v >= 0 && v <= 100 && v % 5 === 0, DEFAULTS.floor));
